@@ -29,7 +29,8 @@ class Selector extends StatefulWidget {
 }
 
 class _SelectorState extends State<Selector> {
-  String _book = 'Matthew';
+  static BibleData _bibleData = BibleData();
+  String _book = _bibleData.books[0];
   int _chapter = 1;
   bool _playing = false;
   IconData _icon = Icons.play_arrow;
@@ -63,6 +64,8 @@ class _SelectorState extends State<Selector> {
           padding: EdgeInsets.all(20),
           alignment: Alignment.center,
           child: BookSelector(
+            books: _bibleData.books,
+            chapters: _bibleData.chapters,
             book: _book,
             chapter: _chapter,
             onBookChanged: _handleBookChange,
@@ -90,6 +93,8 @@ class _SelectorState extends State<Selector> {
 class BookSelector extends StatelessWidget {
   BookSelector(
       {Key? key,
+      required this.books,
+      required this.chapters,
       this.book: 'Matthew',
       this.chapter: 1,
       required this.onBookChanged,
@@ -98,12 +103,14 @@ class BookSelector extends StatelessWidget {
 
   final String book;
   final int chapter;
+  final List<String> books;
+  final Map<String, int> chapters;
   final ValueChanged<String> onBookChanged;
   final ValueChanged<int> onChapterChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return  Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
@@ -115,17 +122,14 @@ class BookSelector extends StatelessWidget {
               ),
               child: DropdownButton<String>(
                   value: book,
-                  icon: const Icon(Icons.book),
-                  iconSize: 24,
+                  iconSize: 36,
                   elevation: 16,
                   dropdownColor: Colors.lightBlueAccent,
-                  style: TextStyle(
-                    fontSize: 30
-                  ),
+                  style: TextStyle(fontSize: 24),
                   onChanged: (String? newValue) {
                     onBookChanged(newValue!);
                   },
-                  items: <String>['Matthew', 'Mark', 'Luke', 'John']
+                  items: books
                       .map<DropdownMenuItem<String>>((String value) =>
                           DropdownMenuItem(value: value, child: Text(value)))
                       .toList())),
@@ -137,13 +141,10 @@ class BookSelector extends StatelessWidget {
               ),
               child: DropdownButton<int>(
                   value: chapter,
-                  icon: const Icon(Icons.book),
-                  iconSize: 24,
+                  iconSize: 36,
                   elevation: 16,
                   dropdownColor: Colors.lightBlueAccent,
-                  style: TextStyle(
-                      fontSize: 30
-                  ),
+                  style: TextStyle(fontSize: 30),
                   onChanged: (int? newValue) {
                     onChapterChanged(newValue!);
                   },
@@ -155,3 +156,38 @@ class BookSelector extends StatelessWidget {
         ]);
   }
 }
+
+class BibleData {
+  final List<String> books = jsonData.keys.toList();
+  final Map<String, int> chapters = jsonData;
+}
+
+const jsonData = {
+  "มัทธิว": 28,
+  "มาระโก": 16,
+  "ลูกา": 24,
+  "ยอห์น": 21,
+  "กิจการ": 28,
+  "โรม": 16,
+  "1 โครินธ์": 16,
+  "2 โครินธ์": 13,
+  "กาลาเทีย": 6,
+  "เอเฟซัส": 6,
+  "ฟิลิปปี": 4,
+  "โคโลสี": 4,
+  "1 เธสะโลนิกา": 5,
+  "2 เธสะโลนิกา": 3,
+  "1 ทิโมธี": 6,
+  "2 ทิโมธี": 4,
+  "ทิตัส": 3,
+  "ฟีเลโมน": 1,
+  "ฮีบรู": 13,
+  "ยากอบ": 5,
+  "1 เปโตร": 5,
+  "2 เปโตร": 3,
+  "1 ยอห์น": 5,
+  "2 ยอห์น": 1,
+  "3 ยอห์น": 1,
+  "ยูดา": 1,
+  "วิวรณ์": 22
+};
