@@ -82,8 +82,12 @@ class _SelectorState extends State<Selector> {
 
   void _handleChapterChange(int newChapter) {
     setState(() {
-      _chapter = newChapter;
-      if (_playing) _handlePlayingChange();
+      if (newChapter == _chapter) {
+        _audioPlayer.seek(Duration(milliseconds: 0));
+      } else {
+        _chapter = newChapter;
+        if (_playing) _audioCache.play(makeFileName());
+      }
     });
   }
 
