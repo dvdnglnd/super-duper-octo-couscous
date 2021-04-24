@@ -1,5 +1,5 @@
-name: test_flutter_app
-description: A new Flutter application.
+name: easy_bible_listening
+description: An app to easily listen to the bible.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.

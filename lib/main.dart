@@ -8,12 +8,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  final String selection = 'sup';
-
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -21,11 +18,11 @@ class MyApp extends StatelessWidget {
       DeviceOrientation.portraitDown,
     ]);
     return MaterialApp(
-        title: 'เสียงพระเจ้า',
+        title: 'พระคัมภีร์เรียบง่าย',
         home: Scaffold(
             appBar: AppBar(
                 title: Center(
-              child: Text('พระเสียงพระเจ้า'),
+              child: Text('พระคัมภีร์เรียบง่าย'),
             )),
             body: Container(padding: EdgeInsets.all(20), child: Selector())));
   }
@@ -44,8 +41,8 @@ class _SelectorState extends State<Selector> {
   bool _playing = false;
   IconData _icon = Icons.play_arrow;
   static AudioPlayer _audioPlayer = AudioPlayer();
-  static AudioCache _audioCache = AudioCache(prefix: 'assets/audios/',
-      fixedPlayer: _audioPlayer);
+  static AudioCache _audioCache =
+      AudioCache(prefix: 'assets/audios/', fixedPlayer: _audioPlayer);
 
   void _handleBookChange(String newBook) {
     setState(() {
@@ -68,15 +65,17 @@ class _SelectorState extends State<Selector> {
   }
 
   String makeFileName() {
-    return "B" + addZero(_bibleData.books.indexOf(_book) + 1) + "___"
-        + addZero(_chapter) + ".mp3";
+    return "B" +
+        addZero(_bibleData.books.indexOf(_book) + 1) +
+        "___" +
+        addZero(_chapter) +
+        ".mp3";
   }
 
   void _handlePlayingChange() {
     setState(() {
       _playing = !_playing;
-      _playing ? _audioCache.play(makeFileName()) :
-        _audioPlayer.pause();
+      _playing ? _audioCache.play(makeFileName()) : _audioPlayer.pause();
       _icon = _playing ? Icons.pause : Icons.play_arrow;
     });
   }
@@ -140,12 +139,13 @@ class BookSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        alignment: WrapAlignment.center,
         children: <Widget>[
           Container(
-              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
               decoration: BoxDecoration(
                 color: Colors.lightBlueAccent,
                 borderRadius: BorderRadius.circular(20),
@@ -178,7 +178,7 @@ class BookSelector extends StatelessWidget {
                   onChanged: (int? newValue) {
                     onChapterChanged(newValue!);
                   },
-                  items: [for(var i=1; i<=maxChapter; i+=1) i]
+                  items: [for (var i = 1; i <= maxChapter; i += 1) i]
                       .map<DropdownMenuItem<int>>((int value) =>
                           DropdownMenuItem(
                               value: value, child: Text(value.toString())))
