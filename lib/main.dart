@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer';
 
 void main() => runApp(MyApp());
@@ -44,111 +45,131 @@ class _SelectorState extends State<Selector> {
   static AudioPlayer _audioPlayer = AudioPlayer();
   static AudioCache _audioCache =
       AudioCache(prefix: 'assets/audios/', fixedPlayer: _audioPlayer);
+  static final Future<SharedPreferences> _sharedPreferences = SharedPreferences.getInstance();
 
-  @override
-  void initState() {
-    _audioPlayer.onPlayerCompletion.listen((event) {
-      var nextBook = 'default';
-      var nextChapter = 1;
-      if (_chapter == _maxChapter) {
-        if (_bibleData.books.indexOf(_book) < _bibleData.books.length - 1) {
-          nextBook = _bibleData.books.elementAt(_bibleData.books.indexOf(_book) + 1);
-        } else {
-          nextBook = _bibleData.books.first;
-          nextChapter = 1;
-        }
-      } else {
-        nextBook = _book;
-        nextChapter = _chapter + 1;
-      }
-      setState(() {
-        _book = nextBook;
-        _chapter = nextChapter;
-        _maxChapter = _bibleData.chapters[_book]!;
-      });
-      _audioCache.play(makeFileName());
-    });
-    super.initState();
+  void updateBook(String book) async {
+    _book = book;
+    SharedPreferences prefs = await _sharedPreferences;
+    prefs.setString('book', book);
   }
 
-  void _handleBookChange(String newBook) {
-    if (newBook != _book) {
-      setState(() {
-        _book = newBook;
-        _maxChapter = _bibleData.chapters[_book]!;
-        _chapter = 1;
-        if (_playing) _handlePlayingChange();
+  void updateChapter(int chapter) async {
+    _chapter = chapter;
+    SharedPreferences prefs = await _sharedPreferences;
+    prefs.setInt('chapter', chapter);
+  }
+
+    @override
+    void initState() {
+      _sharedPreferences.then((SharedPreferences prefs) {
+        _book = prefs.getString('book') ?? _bibleData.books[0];
+        _chapter = prefs.getInt('chapter') ?? 1;
       });
+      _audioPlayer.onPlayerCompletion.listen((event) {
+        var nextBook = 'default';
+        var nextChapter = 1;
+        if (_chapter == _maxChapter) {
+          if (_bibleData.books.indexOf(_book) <
+              _bibleData.books.length - 1) {
+            nextBook = _bibleData.books
+                .elementAt(_bibleData.books.indexOf(_book) + 1);
+          } else {
+            nextBook = _bibleData.books.first;
+            nextChapter = 1;
+          }
+        } else {
+          nextBook = _book;
+          nextChapter = _chapter + 1;
+        }
+        setState(() {
+          updateBook(nextBook);
+          updateChapter(nextChapter);
+          _maxChapter = _bibleData.chapters[_book]!;
+        });
+        _audioCache.play(makeFileName());
+      });
+      super.initState();
+    }
+
+    void _handleBookChange(String newBook) {
+      if (newBook != _book) {
+        setState(() {
+          updateBook(newBook);
+          _maxChapter = _bibleData.chapters[_book]!;
+          updateChapter(1);
+          if (_playing) _handlePlayingChange();
+        });
+      }
+    }
+
+    void _handleChapterChange(int newChapter) {
+      setState(() {
+        if (newChapter == _chapter) {
+          _audioPlayer.seek(Duration(milliseconds: 0));
+        } else {
+          updateChapter(newChapter);
+          if (_playing) _audioCache.play(makeFileName());
+        }
+      });
+    }
+
+    String addZero(int) {
+      return int < 10 ? "0" + int.toString() : int.toString();
+    }
+
+    String makeFileName() {
+      return "B" +
+          addZero(_bibleData.books.indexOf(_book) + 1) +
+          "___" +
+          addZero(_chapter) +
+          ".mp3";
+    }
+
+    void _handlePlayingChange() {
+      setState(() {
+        _playing = !_playing;
+        _playing ? _audioCache.play(makeFileName()) : _audioPlayer.pause();
+        _icon = _playing ? Icons.pause : Icons.play_arrow;
+      });
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Container(
+            height: 150.0,
+            padding: EdgeInsets.all(20),
+            alignment: Alignment.center,
+            child: BookSelector(
+              books: _bibleData.books,
+              chapters: _bibleData.chapters,
+              book: _book,
+              chapter: _chapter,
+              maxChapter: _maxChapter,
+              onBookChanged: _handleBookChange,
+              onChapterChanged: _handleChapterChange,
+            ),
+          ),
+          Container(
+              height: 200.0,
+              width: 200.0,
+              padding: EdgeInsets.all(10),
+              child: FittedBox(
+                child: FloatingActionButton(
+                  onPressed: () {
+                    _handlePlayingChange();
+                  },
+                  child: Icon(_icon),
+                  backgroundColor: Colors.lightBlue,
+                ),
+              )),
+        ],
+      );
     }
   }
 
-  void _handleChapterChange(int newChapter) {
-    setState(() {
-      if (newChapter == _chapter) {
-        _audioPlayer.seek(Duration(milliseconds: 0));
-      } else {
-        _chapter = newChapter;
-        if (_playing) _audioCache.play(makeFileName());
-      }
-    });
-  }
-
-  String addZero(int) {
-    return int < 10 ? "0" + int.toString() : int.toString();
-  }
-
-  String makeFileName() {
-    return "B" +
-        addZero(_bibleData.books.indexOf(_book) + 1) +
-        "___" +
-        addZero(_chapter) +
-        ".mp3";
-  }
-
-  void _handlePlayingChange() {
-    setState(() {
-      _playing = !_playing;
-      _playing ? _audioCache.play(makeFileName()) : _audioPlayer.pause();
-      _icon = _playing ? Icons.pause : Icons.play_arrow;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: <Widget>[
-        Container(
-          height: 150.0,
-          padding: EdgeInsets.all(20),
-          alignment: Alignment.center,
-          child: BookSelector(
-            books: _bibleData.books,
-            chapters: _bibleData.chapters,
-            book: _book,
-            chapter: _chapter,
-            maxChapter: _maxChapter,
-            onBookChanged: _handleBookChange,
-            onChapterChanged: _handleChapterChange,
-          ),
-        ),
-        Container(
-            height: 200.0,
-            width: 200.0,
-            padding: EdgeInsets.all(10),
-            child: FittedBox(
-              child: FloatingActionButton(
-                onPressed: () {
-                  _handlePlayingChange();
-                },
-                child: Icon(_icon),
-                backgroundColor: Colors.lightBlue,
-              ),
-            )),
-      ],
-    );
-  }
-}
 
 class BookSelector extends StatelessWidget {
   BookSelector(
