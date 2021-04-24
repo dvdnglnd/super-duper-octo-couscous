@@ -47,12 +47,14 @@ class _SelectorState extends State<Selector> {
       _book = newBook;
       _maxChapter = _bibleData.chapters[_book]!;
       _chapter = 1;
+      if (_playing) _handlePlayingChange();
     });
   }
 
   void _handleChapterChange(int newChapter) {
     setState(() {
       _chapter = newChapter;
+      if (_playing) _handlePlayingChange();
     });
   }
 
@@ -67,9 +69,9 @@ class _SelectorState extends State<Selector> {
 
   void _handlePlayingChange() {
     setState(() {
+      _playing = !_playing;
       _playing ? _audioCache.play(makeFileName()) :
         _audioPlayer.pause();
-      _playing = !_playing;
       _icon = _playing ? Icons.pause : Icons.play_arrow;
     });
   }
