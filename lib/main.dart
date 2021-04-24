@@ -72,12 +72,14 @@ class _SelectorState extends State<Selector> {
   }
 
   void _handleBookChange(String newBook) {
-    setState(() {
-      _book = newBook;
-      _maxChapter = _bibleData.chapters[_book]!;
-      _chapter = 1;
-      if (_playing) _handlePlayingChange();
-    });
+    if (newBook != _book) {
+      setState(() {
+        _book = newBook;
+        _maxChapter = _bibleData.chapters[_book]!;
+        _chapter = 1;
+        if (_playing) _handlePlayingChange();
+      });
+    }
   }
 
   void _handleChapterChange(int newChapter) {
