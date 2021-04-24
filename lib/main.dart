@@ -2,8 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -32,12 +35,18 @@ class _SelectorState extends State<Selector> {
   static BibleData _bibleData = BibleData();
   String _book = _bibleData.books[0];
   int _chapter = 1;
+  int _maxChapter = _bibleData.chapters[_bibleData.books[0]]!;
   bool _playing = false;
   IconData _icon = Icons.play_arrow;
+  static AudioPlayer _audioPlayer = AudioPlayer();
+  static AudioCache _audioCache = AudioCache(prefix: 'assets/audios/',
+      fixedPlayer: _audioPlayer);
 
   void _handleBookChange(String newBook) {
     setState(() {
       _book = newBook;
+      _maxChapter = _bibleData.chapters[_book]!;
+      _chapter = 1;
     });
   }
 
@@ -47,8 +56,19 @@ class _SelectorState extends State<Selector> {
     });
   }
 
+  String addZero(int) {
+    return int < 10 ? "0" + int.toString() : int.toString();
+  }
+
+  String makeFileName() {
+    return "B" + addZero(_bibleData.books.indexOf(_book) + 1) + "___"
+        + addZero(_chapter) + ".mp3";
+  }
+
   void _handlePlayingChange() {
     setState(() {
+      _playing ? _audioCache.play(makeFileName()) :
+        _audioPlayer.pause();
       _playing = !_playing;
       _icon = _playing ? Icons.pause : Icons.play_arrow;
     });
@@ -68,6 +88,7 @@ class _SelectorState extends State<Selector> {
             chapters: _bibleData.chapters,
             book: _book,
             chapter: _chapter,
+            maxChapter: _maxChapter,
             onBookChanged: _handleBookChange,
             onChapterChanged: _handleChapterChange,
           ),
@@ -95,14 +116,16 @@ class BookSelector extends StatelessWidget {
       {Key? key,
       required this.books,
       required this.chapters,
-      this.book: 'Matthew',
+      required this.book,
       this.chapter: 1,
+      required this.maxChapter,
       required this.onBookChanged,
       required this.onChapterChanged})
       : super(key: key);
 
   final String book;
   final int chapter;
+  final int maxChapter;
   final List<String> books;
   final Map<String, int> chapters;
   final ValueChanged<String> onBookChanged;
@@ -144,11 +167,11 @@ class BookSelector extends StatelessWidget {
                   iconSize: 36,
                   elevation: 16,
                   dropdownColor: Colors.lightBlueAccent,
-                  style: TextStyle(fontSize: 30),
+                  style: TextStyle(fontSize: 20),
                   onChanged: (int? newValue) {
                     onChapterChanged(newValue!);
                   },
-                  items: <int>[1, 2, 3, 4, 5]
+                  items: [for(var i=1; i<=maxChapter; i+=1) i]
                       .map<DropdownMenuItem<int>>((int value) =>
                           DropdownMenuItem(
                               value: value, child: Text(value.toString())))
