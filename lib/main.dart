@@ -7,6 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:developer';
 
 void main() => runApp(MyApp());
 
@@ -43,6 +44,32 @@ class _SelectorState extends State<Selector> {
   static AudioPlayer _audioPlayer = AudioPlayer();
   static AudioCache _audioCache =
       AudioCache(prefix: 'assets/audios/', fixedPlayer: _audioPlayer);
+
+  @override
+  void initState() {
+    _audioPlayer.onPlayerCompletion.listen((event) {
+      var nextBook = 'default';
+      var nextChapter = 1;
+      if (_chapter == _maxChapter) {
+        if (_bibleData.books.indexOf(_book) < _bibleData.books.length - 1) {
+          nextBook = _bibleData.books.elementAt(_bibleData.books.indexOf(_book) + 1);
+        } else {
+          nextBook = _bibleData.books.first;
+          nextChapter = 1;
+        }
+      } else {
+        nextBook = _book;
+        nextChapter = _chapter + 1;
+      }
+      setState(() {
+        _book = nextBook;
+        _chapter = nextChapter;
+        _maxChapter = _bibleData.chapters[_book]!;
+      });
+      _audioCache.play(makeFileName());
+    });
+    super.initState();
+  }
 
   void _handleBookChange(String newBook) {
     setState(() {
